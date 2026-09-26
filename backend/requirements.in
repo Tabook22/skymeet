@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+livekit-api
+pwdlib[argon2]
+pydantic-settings
+email-validator
+python-multipart
+pillow
+cryptography
+httpx
+pytest
+tzdata

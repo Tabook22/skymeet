@@ -1,0 +1,14 @@
+.git
+.env
+.venv
+.cache
+.local
+node_modules
+dist
+data
+backups
+test-results
+playwright-report
+deploy/livekit.yaml
+**/__pycache__
+**/.pytest_cache

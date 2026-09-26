@@ -1,0 +1,37 @@
+name: Verify Sky Meet
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+          cache: npm
+      - run: pip install -r backend/requirements.txt
+      - run: PYTHONPATH=backend pytest backend/tests -q
+      - run: npm ci
+      - run: npm run build
+      - run: npm audit --audit-level=moderate
+      - name: Initialize local integration environment
+        run: |
+          python scripts/init_local.py
+          alembic -c backend/alembic.ini upgrade head
+          alembic -c backend/alembic.ini check
+          PYTHONPATH=backend python scripts/seed_test_accounts.py
+          curl -fsSL https://github.com/livekit/livekit/releases/download/v1.13.7/livekit_1.13.7_linux_amd64.tar.gz | tar -xz -C .local
+          curl -fsSL https://github.com/caddyserver/caddy/releases/download/v2.11.4/caddy_2.11.4_linux_amd64.tar.gz | tar -xz -C .local
+          .local/livekit-server --config .local/livekit.yaml >.local/livekit.log 2>&1 &
+          uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --no-access-log >.local/api.log 2>&1 &
+          .local/caddy run --config deploy/media.Caddyfile >.local/gateway.log 2>&1 &
+          npm run dev >.local/frontend.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://localhost:5173/skymeet/api/health && break || sleep 1; done
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      # Reports may contain private invitation links, so are not uploaded.

@@ -1,0 +1,18 @@
+# Include INSIDE the existing HTTPS server block for skygreenline-lab.io.
+# Keep every existing root-site location, upstream and TLS directive unchanged.
+# Confirm 127.0.0.1:8080 is Sky Meet's private frontend before enabling.
+location = /skymeet {
+    return 308 /skymeet/;
+}
+
+location ^~ /skymeet/ {
+    # No trailing slash: preserve /skymeet/ for the frontend's own routing.
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache off;
+    client_max_body_size 3m;
+}

@@ -1,0 +1,82 @@
+# Production on Ubuntu/Linux. Host networking is intentional for WebRTC.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    init: true
+    network_mode: host
+    env_file: .env
+    environment:
+      DATABASE_URL: sqlite:////data/skymeet.db
+      ASSET_DIR: /data/assets
+    volumes:
+      - skymeet_data:/data
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging: &logs
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logs
+  livekit:
+    image: livekit/livekit-server:v1.13.7
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/livekit.yaml:/etc/livekit.yaml:ro
+    depends_on: [redis]
+    security_opt: ["no-new-privileges:true"]
+    logging: *logs
+  media-gateway:
+    image: caddy:2.11.4-alpine
+    command: run --config /etc/caddy/Caddyfile
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/media.Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      api: {condition: service_healthy}
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging: *logs
+  redis:
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    command: redis-server /etc/redis.conf
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/redis.conf:/etc/redis.conf:ro
+    security_opt: ["no-new-privileges:true"]
+    logging: *logs
+  edge:
+    # Opt-in only: an existing VPS website must retain ownership of ports 80/443.
+    profiles: ["standalone-edge"]
+    image: livekit/caddyl4@sha256:9dd090159a6042a907dbff0ce9dda27a21d2a559dc7b03b60a8e6b1b60b8348e
+    command: run --config /etc/caddy.yaml --adapter yaml
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./deploy/caddy.yaml:/etc/caddy.yaml:ro
+      - caddy_data:/data
+    depends_on: [frontend, livekit, media-gateway]
+    logging: *logs
+volumes:
+  skymeet_data:
+  caddy_data:

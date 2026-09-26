@@ -1,0 +1,27 @@
+{
+	auto_https off
+	admin off
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request>uri delete
+				request>headers>Authorization delete
+			}
+		}
+	}
+}
+# Private HTTP signaling gateway behind the TLS/SNI edge.
+http://:7883 {
+	bind 127.0.0.1
+	@rtc path /rtc /rtc/*
+	handle @rtc {
+		forward_auth 127.0.0.1:8000 {
+			uri /api/media/authorize
+			header_up -Connection
+			header_up -Upgrade
+		}
+		reverse_proxy 127.0.0.1:7880
+	}
+	respond "Not found" 404
+}

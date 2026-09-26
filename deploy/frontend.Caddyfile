@@ -1,0 +1,35 @@
+{
+	auto_https off
+	admin off
+}
+http://:8080 {
+	bind 127.0.0.1
+	request_body {
+		max_size 3MB
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Strict-Transport-Security "max-age=31536000"
+		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' wss://meet-media.skygreenline-lab.io; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	}
+	redir /skymeet /skymeet/ 308
+	handle_path /skymeet/api/* {
+		rewrite * /api{uri}
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle /skymeet/assets/* {
+		root * /srv
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+	handle /skymeet/* {
+		root * /srv
+		try_files {path} /skymeet/index.html
+		header Cache-Control no-cache
+		file_server
+	}
+	respond "Sky Meet is available at /skymeet/" 404
+}

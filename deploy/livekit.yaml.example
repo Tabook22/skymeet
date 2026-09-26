@@ -1,0 +1,26 @@
+# Copy to deploy/livekit.yaml (gitignored). Set the SAME key/secret as .env.
+port: 7880
+bind_addresses: ["0.0.0.0"]
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: true
+redis:
+  address: 127.0.0.1:6379
+keys:
+  REPLACE_WITH_RANDOM_KEY_ID: REPLACE_WITH_RANDOM_48_BYTE_SECRET
+turn:
+  enabled: true
+  domain: meet-turn.skygreenline-lab.io
+  tls_port: 5349
+  udp_port: 3478
+  external_tls: true
+webhook:
+  api_key: REPLACE_WITH_RANDOM_KEY_ID
+  urls: ["http://127.0.0.1:8000/api/livekit/webhook"]
+room:
+  empty_timeout: 300
+  departure_timeout: 60
+logging:
+  level: info

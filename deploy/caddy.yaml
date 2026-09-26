@@ -1,0 +1,49 @@
+# Based on the official LiveKit deploy generator. This edge owns ports 80/443.
+# Merge existing website routing before using it on a VPS serving other websites.
+logging:
+  logs:
+    default:
+      level: INFO
+storage:
+  module: file_system
+  root: /data
+apps:
+  tls:
+    certificates:
+      automate:
+        - skygreenline-lab.io
+        - meet-media.skygreenline-lab.io
+        - meet-turn.skygreenline-lab.io
+  layer4:
+    servers:
+      main:
+        listen: [":443"]
+        routes:
+          - match:
+              - tls:
+                  sni: ["meet-turn.skygreenline-lab.io"]
+            handle:
+              - handler: tls
+              - handler: proxy
+                upstreams:
+                  - dial: ["127.0.0.1:5349"]
+          - match:
+              - tls:
+                  sni: ["meet-media.skygreenline-lab.io"]
+            handle:
+              - handler: tls
+                connection_policies:
+                  - alpn: ["http/1.1"]
+              - handler: proxy
+                upstreams:
+                  - dial: ["127.0.0.1:7883"]
+          - match:
+              - tls:
+                  sni: ["skygreenline-lab.io"]
+            handle:
+              - handler: tls
+                connection_policies:
+                  - alpn: ["http/1.1"]
+              - handler: proxy
+                upstreams:
+                  - dial: ["127.0.0.1:8080"]
