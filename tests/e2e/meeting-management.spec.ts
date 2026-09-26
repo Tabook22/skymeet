@@ -1,3 +1,4 @@
+import { submitLogin } from "./login";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
@@ -14,7 +15,7 @@ test("admin sorts, reschedules, repeats and deletes employee meetings", async ({
     .getByLabel("Email address", { exact: true })
     .fill(accounts[0].email);
   await page.getByLabel("Password", { exact: true }).fill(accounts[0].password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await submitLogin(page);
   await expect(
     page.getByRole("link", { name: "Meetings", exact: true }),
   ).toBeVisible();

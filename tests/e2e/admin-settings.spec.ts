@@ -1,3 +1,4 @@
+import { submitLogin } from "./login";
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
@@ -11,7 +12,7 @@ async function signIn(page: Page, email: string, password: string) {
   await page.goto("./");
   await page.getByLabel("Email address", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await submitLogin(page);
   await expect(
     page.getByRole("button", { name: "Start meeting", exact: true }),
   ).toBeVisible();

@@ -1,3 +1,4 @@
+import { submitLogin } from "./login";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
@@ -15,7 +16,7 @@ test("year/month filters, local calendar grouping and direct deletion", async ({
   await page.goto("./");
   await page.getByLabel("Email address", { exact: true }).fill(account.email);
   await page.getByLabel("Password", { exact: true }).fill(account.password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await submitLogin(page);
   await expect(
     page.getByRole("link", { name: "Meetings", exact: true }),
   ).toBeVisible();

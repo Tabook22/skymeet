@@ -1,3 +1,4 @@
+import { submitLogin } from "./login";
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
@@ -30,7 +31,7 @@ test("accessible login, dashboard and pre-join", async ({ page }) => {
     .getByLabel("Email address", { exact: true })
     .fill(accounts[1].email);
   await page.getByLabel("Password", { exact: true }).fill(accounts[1].password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await submitLogin(page);
   await expect(
     page.getByRole("button", { name: "Start meeting", exact: true }),
   ).toBeVisible();
