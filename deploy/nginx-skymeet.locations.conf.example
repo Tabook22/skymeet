@@ -5,6 +5,24 @@ location = /skymeet {
     return 308 /skymeet/;
 }
 
+# Same-domain WSS avoids changing DNS or the existing TLS edge.
+location ^~ /skymeet/media/ {
+    proxy_pass http://127.0.0.1:7883/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+    proxy_buffering off;
+    proxy_cache off;
+    # Signaling URLs contain short-lived tokens; never write them to access logs.
+    access_log off;
+}
+
 location ^~ /skymeet/ {
     # No trailing slash: preserve /skymeet/ for the frontend's own routing.
     proxy_pass http://127.0.0.1:8080;

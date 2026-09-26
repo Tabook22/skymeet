@@ -10,5 +10,6 @@ backups
 test-results
 playwright-report
 deploy/livekit.yaml
+deploy/turnserver.conf
 **/__pycache__
 **/.pytest_cache

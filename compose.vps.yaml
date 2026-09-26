@@ -1,0 +1,17 @@
+# Use with: docker compose -p skymeet -f compose.yaml -f compose.vps.yaml ...
+# Existing Nginx keeps ports 80/443. Existing coturn keeps 3478/5349.
+services:
+  turn:
+    image: coturn/coturn:4.18.0-r0@sha256:bbefd3e1fdfdc0d58770fe01b581fd8b00d9f3a5580d00acb77cf719a6bc78e3
+    restart: unless-stopped
+    network_mode: host
+    user: "0:0"
+    command: ["-c", "/etc/skymeet-turn.conf"]
+    volumes:
+      - ./deploy/turnserver.conf:/etc/skymeet-turn.conf:ro
+      - /etc/skymeet/tls:/etc/skymeet/tls:ro
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}

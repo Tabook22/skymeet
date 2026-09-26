@@ -13,7 +13,7 @@ http://:8080 {
 		Referrer-Policy no-referrer
 		Strict-Transport-Security "max-age=31536000"
 		Permissions-Policy "camera=(self), microphone=(self), display-capture=(self), geolocation=()"
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' wss://meet-media.skygreenline-lab.io; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' wss://skygreenline-lab.io wss://meet-media.skygreenline-lab.io; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 	}
 	redir /skymeet /skymeet/ 308
 	handle_path /skymeet/api/* {

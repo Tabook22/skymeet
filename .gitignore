@@ -11,5 +11,6 @@ test-results/
 playwright-report/
 .local/
 deploy/livekit.yaml
+deploy/turnserver.conf
 *.tsbuildinfo
 backups/
