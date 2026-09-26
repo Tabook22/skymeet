@@ -46,7 +46,7 @@ services:
     logging: *logs
   media-gateway:
     image: caddy:2.11.4-alpine
-    command: run --config /etc/caddy/Caddyfile
+    command: caddy run --config /etc/caddy/Caddyfile
     restart: unless-stopped
     network_mode: host
     volumes:
@@ -69,7 +69,7 @@ services:
     # Opt-in only: an existing VPS website must retain ownership of ports 80/443.
     profiles: ["standalone-edge"]
     image: livekit/caddyl4@sha256:9dd090159a6042a907dbff0ce9dda27a21d2a559dc7b03b60a8e6b1b60b8348e
-    command: run --config /etc/caddy.yaml --adapter yaml
+    command: caddy run --config /etc/caddy.yaml --adapter yaml
     restart: unless-stopped
     network_mode: host
     volumes:
