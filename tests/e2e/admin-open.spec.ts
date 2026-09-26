@@ -21,7 +21,10 @@ test("admin opens a future meeting, admits guests, and reopens the same link", a
     page.getByRole("button", { name: "Start meeting", exact: true }),
   ).toBeVisible();
   const me = await (await page.request.get("/skymeet/api/auth/me")).json();
-  const headers = { Origin: new URL(page.url()).origin, "X-CSRF-Token": me.csrf };
+  const headers = {
+    Origin: new URL(page.url()).origin,
+    "X-CSRF-Token": me.csrf,
+  };
   const start = Date.now() + 7 * 86400000;
   const created = await page.request.post("/skymeet/api/meetings", {
     headers,
@@ -124,5 +127,8 @@ test("admin opens a future meeting, admits guests, and reopens the same link", a
   } finally {
     expect((await page.request.delete(path, { headers })).ok()).toBeTruthy();
     await guestContext.close();
+    expect(
+      (await page.request.post("/skymeet/api/auth/logout", { headers })).ok(),
+    ).toBeTruthy();
   }
 });
