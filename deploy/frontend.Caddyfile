@@ -18,7 +18,10 @@ http://:8080 {
 	redir /skymeet /skymeet/ 308
 	handle_path /skymeet/api/* {
 		rewrite * /api{uri}
-		reverse_proxy 127.0.0.1:8000
+		reverse_proxy 127.0.0.1:8000 {
+			# Nginx/edge is local and overwrites the incoming forwarding headers.
+			trusted_proxies 127.0.0.1 ::1
+		}
 	}
 	handle /skymeet/assets/* {
 		root * /srv
