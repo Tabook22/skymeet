@@ -80,3 +80,9 @@ Passed against the live VPS:
 Application verification also passed 46 backend tests, the production build, the dependency audit and all nine GitHub browser tests. Private QA credentials and one-time import files were removed. Browser screenshots and transport diagnostics remain ignored local artifacts, not published in GitHub.
 
 Both browser clients ran on the same external Windows machine, connecting over the public network to the VPS. This does not establish physical-device quality, compatibility with every browser/network, or capacity under load. Networks restricted to destination port 443 may block the separate TLS TURN port. Automatic invitation email/reminders need SMTP configuration and a real delivery test; manual invitation copying works. Certificate renewal is configured but a future renewal event has not yet been observed.
+
+## Administrator opening and reopening — 26 September 2026
+
+Administrators can select **Open meeting now** before the scheduled join window, or **Reopen meeting** after a meeting ends, expires or is cancelled. The meeting starts now for its original scheduled duration, with the existing link and meeting credentials. This enables the waiting room so attendees require admission. Opening an already-active call preserves its time and participants. Reopening a closed call invalidates previous guest sessions and admission, preserves revoked invitations, and fails without reopening if old media cannot be cleaned up. Existing pre-join screens refresh automatically when the administrator opens a meeting.
+
+51 backend tests pass, including role/CSRF restrictions, early opening and admission, ended/cancelled/expired reopening, old token/session rejection, invitation preservation and media failure. TypeScript and the production build pass. A browser regression test verifies early opening, automatic guest pre-join refresh, actual LiveKit connection, admission and reopening the same link with fresh admission required.

@@ -1,6 +1,10 @@
 import { createContext, useContext } from "react";
 export type Language = "en" | "ar";
 const ar: Record<string, string> = {
+  "Open meeting now": "فتح الاجتماع الآن",
+  "Reopen meeting": "إعادة فتح الاجتماع",
+  "Open now for the scheduled duration. The meeting link and login stay the same. Attendees wait for your admission.":
+    "افتح الاجتماع الآن للمدة المحددة. يبقى رابط الاجتماع وبيانات الدخول كما هي، وينتظر المشاركون موافقتك للدخول.",
   "Select all matching meetings": "تحديد كل الاجتماعات المطابقة",
   "Select meeting": "تحديد الاجتماع",
   Selected: "المحدد",

@@ -100,13 +100,25 @@ export default function MeetingPage() {
   const tooEarly = !!meeting && clock / 1000 < meeting.starts - 900;
   const tokenRequested = useRef(false);
   useEffect(() => {
-    api<Meeting>("/meetings/" + id)
-      .then(setMeeting)
-      .catch((e) => {
-        setError(e.message);
-        if (e instanceof APIError && e.status === 404) setMeeting(null);
-      });
-  }, [id, left]);
+    if (waiting || credentials) return;
+    let alive = true;
+    const refresh = () =>
+      api<Meeting>("/meetings/" + id)
+        .then((m) => {
+          if (alive) setMeeting(m);
+        })
+        .catch((e) => {
+          if (!alive) return;
+          setError(e.message);
+          if (e instanceof APIError && e.status === 404) setMeeting(null);
+        });
+    refresh();
+    const timer = setInterval(refresh, 5000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [id, left, waiting, !!credentials]);
   useEffect(() => {
     if (!waiting && !credentials) return;
     let alive = true;
@@ -189,6 +201,22 @@ export default function MeetingPage() {
     setWaiting(false);
     setLeft(true);
   }
+  async function openNow() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api(`/meetings/${id}/open`, "POST");
+      setMeeting(await api<Meeting>(`/meetings/${id}`));
+      setClock(Date.now());
+      setLeft(false);
+      setPeople([]);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   if (credentials && choices && meeting)
     return (
       <LiveKitRoom
@@ -216,7 +244,24 @@ export default function MeetingPage() {
         />
       </LiveKitRoom>
     );
-  const ended = meeting && ["ended", "cancelled"].includes(meeting.status);
+  const ended =
+    meeting &&
+    (["ended", "cancelled"].includes(meeting.status) ||
+      clock / 1000 >= meeting.ends + 1800);
+  const openControl = user?.role === "admin" &&
+    meeting &&
+    (meeting.status !== "active" || ended) && (
+      <div className="invite-note">
+        <p>
+          {t(
+            "Open now for the scheduled duration. The meeting link and login stay the same. Attendees wait for your admission.",
+          )}
+        </p>
+        <Button disabled={busy} onClick={openNow}>
+          {t(busy ? "Working…" : ended ? "Reopen meeting" : "Open meeting now")}
+        </Button>
+      </div>
+    );
   return (
     <div className="join-page">
       <header className="join-header">
@@ -283,6 +328,7 @@ export default function MeetingPage() {
               )}
               <Link to="/">{t("Back to workspace")}</Link>
             </div>
+            {openControl}
           </div>
         ) : waiting ? (
           <div className="waiting-screen">
@@ -329,6 +375,7 @@ export default function MeetingPage() {
                   {timeFormat(meeting.starts - 900, lang)}
                 </p>
               )}
+              {openControl}
               <a
                 className="text-link"
                 href={`${base}/api/meetings/${meeting.id}/calendar`}

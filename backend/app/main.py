@@ -836,6 +836,39 @@ def lock(mid: str, body: LockIn, user: User = Depends(current_user), db: Session
     return meeting_json(m)
 
 
+@app.post('/api/meetings/{mid}/open')
+async def open_meeting(mid: str, user: User = Depends(admin), db: Session = Depends(db_session)):
+    m = get_meeting(db, mid)
+    stamp = now()
+    # Do not reset participants or the clock when an already-running call is opened.
+    if m.status == 'active' and m.starts - 900 <= stamp < m.ends + 1800:
+        m.waiting_room = True
+        db.commit()
+        return meeting_json(m)
+    closed = m.status in ('ended', 'cancelled') or stamp >= m.ends + 1800
+    if closed:
+        try:
+            await asyncio.wait_for(media.end(mid), timeout=3)
+        except Exception:
+            raise HTTPException(503, 'Unable to close the previous call. Try opening the meeting again.')
+        # Reopening requires fresh guest authentication and fresh admission.
+        invitations = select(Invitation.id).where(Invitation.meeting_id == mid)
+        db.execute(delete(GuestSession).where(GuestSession.invitation_id.in_(invitations)))
+        db.execute(delete(SharedGuestSession).where(SharedGuestSession.meeting_id == mid))
+        db.execute(delete(Participant).where(Participant.meeting_id == mid))
+    duration = max(60, min(m.ends - m.starts, 8 * 3600))
+    m.starts, m.ends = stamp, stamp + duration
+    m.status, m.started_at, m.ended_at = 'scheduled', None, None
+    m.locked, m.waiting_room = False, True
+    for inv in db.scalars(select(Invitation).where(Invitation.meeting_id == mid, Invitation.revoked == False)):
+        inv.expires, inv.reminder_sent = m.ends + 1800, False
+    for session in db.scalars(select(SharedGuestSession).where(SharedGuestSession.meeting_id == mid)):
+        session.expires = min(m.ends + 1800, stamp + 43200)
+    audit(db, user.id, 'meeting.reopened' if closed else 'meeting.opened', mid)
+    db.commit()
+    return meeting_json(m)
+
+
 @app.post('/api/meetings/{mid}/{action}')
 async def close_meeting(mid: str, action: str, user: User = Depends(current_user), db: Session = Depends(db_session)):
     if action not in ('end', 'cancel'):
