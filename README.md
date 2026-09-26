@@ -21,7 +21,7 @@ This is an implemented application, with real meeting authorization and media in
 - Editing a meeting does not automatically email updates/cancellations: use explicit resend for edits and notify recipients when cancelling. Reminder delivery retries every 15 seconds on transient failure; a crash after SMTP acceptance can duplicate a reminder (at-least-once delivery). No external delivery provider tracking.
 - Browser timezone is used for scheduling; arbitrary timezone selection is deferred. Server API errors and some SDK diagnostics/device names are English, even in Arabic mode.
 - Admin colors must remain readable. Automated accessibility checks cover the included default theme, not every uploaded logo or custom brand choice.
-- Production TLS/TURN, physical-device audio quality, cross-network calls, real SMTP delivery, and Ubuntu container execution need staging acceptance on the VPS. The local automated suite uses synthetic media and isolated browser contexts on one Windows machine.
+- The Hostinger deployment has passed public HTTPS/WSS and two-browser audio/video checks, including forced TLS TURN relay, from an external Windows client. Physical-device quality, separate attendee networks, Safari/Firefox, and real SMTP delivery remain unverified. See `docs/VERIFICATION.md` for the deployment record.
 
 ## Local setup (Windows)
 

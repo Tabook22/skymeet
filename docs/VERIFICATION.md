@@ -1,6 +1,6 @@
-# Local verification — 26 September 2026
+# Verification record — 26 September 2026
 
-Environment: Windows, Python 3.14.5, Node 22.17.1, React/Vite development server, FastAPI, SQLite WAL, official **LiveKit Server 1.13.7**, and **Caddy 2.11.4** signaling admission gateway. Services bind to localhost; there is no public deployment.
+Initial local environment: Windows, Python 3.14.5, Node 22.17.1, React/Vite development server, FastAPI, SQLite WAL, official **LiveKit Server 1.13.7**, and **Caddy 2.11.4** signaling admission gateway. The public Hostinger deployment is recorded at the end of this document and supersedes the original local-only deployment limitations below.
 
 ## Passed
 
@@ -60,3 +60,23 @@ The development database was backed up before migration, all 23 existing meeting
 Investigation confirmed the user's seven recent deletion audit targets were absent from the database; many remaining records shared the same title. Added explicit row selection, filtered select-all, exact-count/date confirmation, immediate local removal/count updates, stale-row handling and refresh on returning to a tab. Bulk deletion authorizes the entire explicit ID list before one transaction, removes dependent data and preserves audit events. Media cleanup has a three-second response budget and continues via orphan-room reconciliation when needed.
 
 46 backend tests pass, including mixed-state deletion, unauthorized mixed selections, CSRF/origin validation, transaction rollback, repeat requests, dependency cleanup and failed/slow media cleanup. Browser checks pass for duplicate-title single deletion with reload, multi-delete, cancellation, filtered selection, selection reset, preserving unrelated meetings, stale-list refresh, calendar filters, accessibility and mobile Arabic layout. TypeScript and the production build pass. Disposable test meetings/accounts were removed; existing user meetings were preserved.
+
+## Hostinger production deployment — 26 September 2026
+
+Live address: https://skygreenline-lab.io/skymeet/. Source was pushed to GitHub, then fast-forwarded and built in `/home/nasser/skymeet` using the separate `skymeet` Compose project. The current administrator's existing password hash and branding were imported; local meetings, sample users and sessions were excluded. Fresh application and media secrets remain outside Git.
+
+The operator activated the prepared Nginx snippet using sudo. The existing root and `/thermal/` responses remain HTTP 200 with their original SHA-256 content checksums. Their applications, listeners and routing are preserved. Nginx backup: `/etc/nginx/skymeet-backups/20260926T093307465774Z`. Existing TURN listeners on 3478/5349 remain available; Sky Meet uses separate listeners on 34790/53490.
+
+Passed against the live VPS:
+
+- HTTPS application, branding PNGs, static JavaScript/CSS and JSON health endpoint. API is healthy and all six Sky Meet containers are running.
+- Unauthenticated admin-users, meeting-list and signaling requests return 401. Raw API, signaling, gateway, frontend and Redis ports bind only to loopback.
+- A temporary employee signed in through the public UI, started a meeting and copied its generated link and credentials. An isolated guest browser signed in with the meeting credentials, entered the waiting room and was admitted by the host.
+- Actual inbound video frames and live remote audio tracks on both Chromium clients using synthetic devices, through the public HTTPS/WSS application and VPS SFU. The normal call selected UDP candidate pairs.
+- A second call restricted both browsers to TLS TURN on port 53490 and `iceTransportPolicy: relay`. Both clients again received audio/video; selected ICE statistics report `candidateType: relay` and `relayProtocol: tls`, with nonzero media traffic.
+- TURN TLS certificate validation succeeds for the public domain. The private configuration and root-owned certificate copies remain read-only in the container. Startup now refuses to proceed if those files cannot be read, avoiding Coturn's fallback to default listeners.
+- All temporary meetings were ended and deleted through the API. The temporary account and its sessions were removed. Final database counts: one retained administrator, zero meetings. Only operator/test audit records remain.
+
+Application verification also passed 46 backend tests, the production build, the dependency audit and all nine GitHub browser tests. Private QA credentials and one-time import files were removed. Browser screenshots and transport diagnostics remain ignored local artifacts, not published in GitHub.
+
+Both browser clients ran on the same external Windows machine, connecting over the public network to the VPS. This does not establish physical-device quality, compatibility with every browser/network, or capacity under load. Networks restricted to destination port 443 may block the separate TLS TURN port. Automatic invitation email/reminders need SMTP configuration and a real delivery test; manual invitation copying works. Certificate renewal is configured but a future renewal event has not yet been observed.
